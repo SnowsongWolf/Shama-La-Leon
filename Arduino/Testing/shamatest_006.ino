@@ -11,6 +11,8 @@
 #define FANLOW    80
 #define FANHIGH   90
 
+#define TESTCOL 0x000011
+
 Adafruit_LiquidCrystal lcd(0);
 
 const int ledsPerStrip = 500;   // Simulate full suit, we'll only have 450 total on channel 0
@@ -63,19 +65,22 @@ void loop() {
     case 0:     // LEDs off, just do temperature
       lcd.setCursor(5, 0);
       lcd.print("OFF");
-      for (int i = 0; i < 150; i++) {
+      for (int i = 0; i < 450; i++) {
         leds.setPixel(i, 0x000000);
       }
       leds.show();
+      while (leds.busy()) delay(1);
+      digitalWrite(S_LED, LOW);
       break;
 
     case 1:
       lcd.setCursor(5, 0);
       lcd.print("RUN");
       digitalWrite(S_LED, HIGH);
-      for (int i = 0; i < 150; i++) {
-        leds.setPixel(i, 0x00FFFF);
+      for (int i = 0; i < 450; i++) {
+        leds.setPixel(i, TESTCOL);
         leds.show();
+        delay(100);
       }
       curMode = 2;
       break;
