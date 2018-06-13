@@ -5,6 +5,8 @@
  * Micah Elizabeth Scott, 2013
  * This file is released into the public domain.
  */
+ 
+ // Modified to use Teensy OctoWS2811 data style byte order in output file.
 
 import java.net.*;
 import java.util.Arrays;
