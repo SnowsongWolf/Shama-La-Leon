@@ -308,12 +308,21 @@ public class OPC implements Runnable
       red = gammatable[red];
       green = gammatable[green];
       blue = gammatable[blue];
-
+/*
       packetData[ledAddress] = (byte)red;
       packetData[ledAddress + 1] = (byte)green;
       packetData[ledAddress + 2] = (byte)blue;
       
-      ledAddress += 3;
+      ledAddress += 3;*/
+      
+      int tpixel = (green « 16) | (red « 8) | (blue);
+      
+      int mask;
+      for (mask = 0x800000; mask != 0; mask »= 1) {
+        byte b = 0;
+        if ((tpixel & mask) != 0) b |= 1;
+        packetData[offset++] = b;
+      }
 
       if (enableShowLocations) {
         pixels[pixelLocation] = 0xFFFFFF ^ pixel;
