@@ -317,10 +317,10 @@ public class OPC implements Runnable
       
       ledAddress += 3;*/
       
-      int tpixel = (green « 16) | (red « 8) | (blue);
+      int tpixel = (green << 16) | (red << 8) | (blue);
       
       int mask;
-      for (mask = 0x800000; mask != 0; mask »= 1) {
+      for (mask = 0x800000; mask != 0; mask >>= 1) {
         byte b = 0;
         if ((tpixel & mask) != 0) b |= 1;
         packetData[offset++] = b;
@@ -343,7 +343,7 @@ public class OPC implements Runnable
   // by draw() and by setPixel().
   void setPixelCount(int numPixels)
   {
-    int numBytes = 3 * numPixels;
+    int numBytes = 24 * numPixels;
     int packetLen = 4 + numBytes;
     if (packetData == null || packetData.length != packetLen) {
       // Set up our packet buffer
