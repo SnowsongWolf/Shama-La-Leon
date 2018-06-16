@@ -5,7 +5,7 @@
 
 #define LED_CH      500   // 500 pixels per channel
 #define MAX_FILES   50    // 50 files to load from SD card
-#define FRAMEDELAY  0     // Microsecond delay between frames
+#define FRAMEDELAY  40    // Millisecond delay between frames
 
 const int ledsPerStrip = LED_CH * 8;
 DMAMEM int displayMemory[ledsPerStrip * 6];
@@ -52,14 +52,14 @@ void setup() {
     
     if(entry.isDirectory()) continue;
     //name = entry.name();
-    Serial.println("Getting name.");
+    //Serial.println("Getting name.");
     entry.getName(tmp, sizeof(tmp));
     //memcpy(name, tmp, 13);
     name = tmp;
-    Serial.print("Name: ");
-    Serial.println(name);
-    Serial.println(tmp);
-    Serial.println("something happened.");
+    //Serial.print("Name: ");
+    //Serial.println(name);
+    //Serial.println(tmp);
+    //Serial.println("something happened.");
     //memcpy(name, entry.name(), sizeof(entry.name()));
     if(name[0] == '.') continue; // Skip hidden files
     len = strlen(name);
@@ -78,7 +78,109 @@ void setup() {
   }
 }
 
-void loop() {
-  // put your main code here, to run repeatedly:
+#define MODE_DATA     0
+#define MODE_HEADER   1
+#define MODE_DISCARD  2
 
+uint8_t mode = MODE_HEADER;
+uint32_t frameno = 0;
+
+uint32_t firstframe, mil;
+uint32_t s;
+uint16_t m;
+
+void loop() {
+  File file;
+
+  Serial.println(filename[currentFile]);
+  delay(2000);
+  if (file = Sd.open(filename[currentFile])) {
+    int16_t a, dataSize;
+    //uint8_t w;
+    byte d[4];
+    uint32_t curpos;
+    //uint8_t dataSize;
+    frameno = 0;
+    file.seek(4);
+    while (file.available()) {
+      if (Serial.available()) {
+        char in = Serial.read();
+        if (in = '+') break;
+      }
+      
+      curpos = file.position();
+      a = file.read(&d, sizeof(d));
+      dataSize = (d[2] << 8) | d[3];
+      Serial.print("Position: ");
+      Serial.print(curpos);
+      Serial.print('\t');
+      
+      Serial.print("Channel: ");
+      Serial.print((int)d[0]);
+      Serial.print('\t');
+      
+      Serial.print("Command: ");
+      Serial.print((int)d[1]);
+      Serial.print('\t');
+      
+      Serial.print("Data length: ");
+      Serial.print(dataSize);
+      Serial.print('\t');
+
+      if ((d[0] <=1) && (d[1] == 0)) {
+        uint8_t dly = 0;
+
+        /*for (int i = 0; i < 140; i++) {
+          byte r, g, b;
+          file.read(&r, sizeof(r));
+          file.read(&g, sizeof(g));
+          file.read(&b, sizeof(b));
+          //pixels[i].r = r;
+          //pixels[i].g = g;
+          //pixels[i].b = b;
+        }*/
+        file.read(&drawingMemory, dataSize);
+        
+        if (frameno > 0) {
+          while (millis() < firstframe + (uint32_t)(FRAMEDELAY * frameno)) {
+            ;
+          }
+        } else firstframe = millis();
+
+        //strip.sendPixels(MAX_LEDS, pixels);
+        //lastframe = millis();
+        Serial.print(frameno);
+        Serial.print('\t');
+        mil = millis() - firstframe;
+        s = (uint32_t)(mil / 1000);
+        m = (uint16_t)(s / 60);
+        mil -= (uint32_t)(s * 1000);
+        s -= m * 60;
+
+        if (m < 10) Serial.print('0');
+        Serial.print(m);
+        Serial.print(':');
+
+        if (s < 10) Serial.print('0');
+        Serial.print(s);
+        Serial.print('.');
+
+        if (mil < 100) Serial.print('0');
+        if (mil < 10) Serial.print('0');
+        Serial.println(mil);
+        
+        //Serial.println("fps");
+        frameno ++;
+      } else {
+        Serial.print("Seek to ");
+        Serial.println(dataSize + curpos + 4);
+        file.seek(dataSize + curpos + 4);
+        //delay(2000);
+      }
+    }
+  }
+  Serial.println("End of line.");
+  file.close();
+  currentFile++;
+  if (currentFile >= nFiles) currentFile = 0;
 }
